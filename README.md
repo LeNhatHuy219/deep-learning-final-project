@@ -24,18 +24,34 @@ Large datasets and model checkpoints are not committed to GitHub because of file
 │   ├── vqa_dataset.json
 │   └── vqa_dataset_flattened.json
 └── TASK2
-    ├── xray_webapp
+    ├── Cau2_DenseNet_LSTM.ipynb
+    ├── blip_webapp
+    │   ├── README.md
     │   ├── app.py
-    │   ├── model_def.py
+    │   ├── cau2_blip_xray_final.ipynb
+    │   ├── evaluate_test.py
+    │   ├── model
     │   ├── requirements.txt
-    │   ├── templates/
-    │   └── static/
-    └── blip_webapp
+    │   ├── static
+    │   │   ├── css
+    │   │   │   └── style.css
+    │   │   └── uploads
+    │   └── templates
+    │       └── index.html
+    ├── cau2_blip_xray_final.ipynb
+    └── xray_webapp
+        ├── README.md
         ├── app.py
-        ├── evaluate_test.py
+        ├── cau2_colab.ipynb
+        ├── model
+        ├── model_def.py
         ├── requirements.txt
-        ├── templates/
-        └── static/
+        ├── static
+        │   ├── css
+        │   │   └── style.css
+        │   └── uploads
+        └── templates
+            └── index.html
 ```
 
 ## Task 1 - Vietnamese Visual Question Answering
