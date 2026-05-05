@@ -25,7 +25,6 @@ Large datasets and model checkpoints are not committed to GitHub because of file
 │   └── vqa_dataset_flattened.json
 └── TASK2
     ├── Food_Classifier.ipynb
-    ├── BaoCao_XrayCaptioning_Final.docx
     ├── xray_webapp
     │   ├── app.py
     │   ├── model_def.py
