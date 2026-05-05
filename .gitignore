@@ -1,0 +1,33 @@
+# macOS / editor junk
+.DS_Store
+~$*.docx
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Local uploads / runtime files
+static/uploads/
+TASK2/**/static/uploads/*
+!TASK2/**/static/uploads/.gitkeep
+
+# Large datasets and extracted image folders
+TASK1/vqa_dataset_final/
+TASK1/vqa_dataset_final.zip
+
+# Large model checkpoints - upload these to Drive/HuggingFace instead
+*.pth
+*.pt
+*.ckpt
+*.safetensors
+*.bin
+
+# Duplicate working copies
+TASK2/* copy/

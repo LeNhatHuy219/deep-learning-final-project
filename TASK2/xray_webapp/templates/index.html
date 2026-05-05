@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chest X-ray Report Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="brand">Chest X-ray Captioning</div>
+        <h1>Sinh báo cáo X-quang ngực tự động</h1>
+      </header>
+
+      <main>
+        <form id="upload-form" class="card">
+          <label for="file-input" class="upload-zone" id="upload-zone">
+            <div id="upload-empty">
+              <div class="upload-title">Kéo và thả ảnh vào đây</div>
+              <div class="upload-hint">hoặc nhấn để chọn — PNG, JPG</div>
+            </div>
+
+            <div id="upload-filled" class="preview-wrap" style="display:none;">
+              <img id="preview-img" class="preview-img" alt="preview" />
+              <div class="preview-info">
+                <div class="preview-name" id="preview-name">filename.png</div>
+                <div class="preview-meta" id="preview-meta">— KB</div>
+              </div>
+              <button type="button" class="preview-clear" id="clear-btn">Đổi ảnh</button>
+            </div>
+          </label>
+
+          <input type="file" id="file-input" class="file-input" accept="image/png,image/jpeg" />
+
+          <div class="error" id="error-box"></div>
+
+          <div class="actions">
+            <span class="loading" id="loading">
+              <span class="spinner"></span>
+              Đang phân tích ảnh
+            </span>
+            <button type="submit" class="btn btn-primary" id="submit-btn" disabled>Sinh báo cáo</button>
+          </div>
+        </form>
+
+        <section class="card result-card" id="result-card">
+          <div class="result-grid">
+            <img class="result-image" id="result-img" alt="X-ray" />
+            <div>
+              <div class="result-block" id="result-vi-block">
+                <div class="result-label">Báo cáo chẩn đoán</div>
+                <div class="result-text result-text-vi" id="result-text-vi"></div>
+              </div>
+
+              <div class="result-disclaimer">Chỉ mang tính chất tham khảo, không thay thế chẩn đoán của bác sĩ chuyên khoa.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+      
+      <footer class="footer">DenseNet121 + LSTM Attention — Indiana University Chest X-rays</footer>
+    </div>
+
+    <script>
+      const fileInput = document.getElementById('file-input')
+      const uploadZone = document.getElementById('upload-zone')
+      const uploadEmpty = document.getElementById('upload-empty')
+      const uploadFilled = document.getElementById('upload-filled')
+      const previewImg = document.getElementById('preview-img')
+      const previewName = document.getElementById('preview-name')
+      const previewMeta = document.getElementById('preview-meta')
+      const clearBtn = document.getElementById('clear-btn')
+      const submitBtn = document.getElementById('submit-btn')
+      const loading = document.getElementById('loading')
+      const errorBox = document.getElementById('error-box')
+      const form = document.getElementById('upload-form')
+      const resultCard = document.getElementById('result-card')
+      const resultImg = document.getElementById('result-img')
+      const resultTextVi = document.getElementById('result-text-vi')
+      const resultViBlock = document.getElementById('result-vi-block')
+      
+      let currentFile = null
+      
+      function formatSize(bytes) {
+        if (bytes < 1024) return bytes + ' B'
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+      }
+      
+      function showError(msg) {
+        errorBox.textContent = msg
+        errorBox.classList.add('visible')
+      }
+      function hideError() {
+        errorBox.classList.remove('visible')
+      }
+      
+      function setFile(file) {
+        if (!file) return
+        if (!['image/png', 'image/jpeg'].includes(file.type)) {
+          showError('Chỉ chấp nhận file PNG hoặc JPG.')
+          return
+        }
+        hideError()
+        currentFile = file
+      
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          previewImg.src = e.target.result
+        }
+        reader.readAsDataURL(file)
+      
+        previewName.textContent = file.name
+        previewMeta.textContent = formatSize(file.size)
+      
+        uploadEmpty.style.display = 'none'
+        uploadFilled.style.display = 'flex'
+        uploadZone.classList.add('has-file')
+        submitBtn.disabled = false
+      }
+      
+      function clearFile(e) {
+        if (e) {
+          e.preventDefault()
+          e.stopPropagation()
+        }
+        currentFile = null
+        fileInput.value = ''
+        uploadEmpty.style.display = 'block'
+        uploadFilled.style.display = 'none'
+        uploadZone.classList.remove('has-file')
+        submitBtn.disabled = true
+      }
+      
+      fileInput.addEventListener('change', (e) => setFile(e.target.files[0]))
+      clearBtn.addEventListener('click', clearFile)
+      
+      // Drag & drop
+      ;['dragenter', 'dragover'].forEach((ev) =>
+        uploadZone.addEventListener(ev, (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          uploadZone.classList.add('dragover')
+        })
+      )
+      ;['dragleave', 'drop'].forEach((ev) =>
+        uploadZone.addEventListener(ev, (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          uploadZone.classList.remove('dragover')
+        })
+      )
+      uploadZone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files[0]
+        if (file) setFile(file)
+      })
+      
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        if (!currentFile) return
+      
+        hideError()
+        submitBtn.disabled = true
+        loading.classList.add('visible')
+        resultCard.classList.remove('visible')
+      
+        const fd = new FormData()
+        fd.append('image', currentFile)
+      
+        try {
+          const res = await fetch('/predict', { method: 'POST', body: fd })
+          const data = await res.json()
+      
+          if (!res.ok) {
+            showError(data.error || 'Có lỗi xảy ra.')
+            return
+          }
+      
+          resultImg.src = data.image_url
+      
+          if (data.caption_vi && data.caption_vi.trim()) {
+            resultTextVi.textContent = data.caption_vi
+            resultViBlock.style.display = 'block'
+          } else {
+            resultViBlock.style.display = 'none'
+          }
+      
+          resultCard.classList.add('visible')
+          resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        } catch (err) {
+          showError('Không kết nối được tới server: ' + err.message)
+        } finally {
+          loading.classList.remove('visible')
+          submitBtn.disabled = false
+        }
+      })
+    </script>
+  </body>
+</html>
